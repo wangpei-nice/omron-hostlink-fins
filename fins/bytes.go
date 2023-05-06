@@ -1,4 +1,4 @@
-package base
+package fins
 
 import "math"
 

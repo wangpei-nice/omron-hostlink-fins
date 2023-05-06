@@ -10,8 +10,6 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"github.com/omron-hostlink-fins/base"
 )
 
 const DEFAULT_TCP_RESPONSE_TIMEOUT = 20 // ms
@@ -88,7 +86,7 @@ func (c *TcpClient) ReadInt16(memoryArea byte, address uint16, readCount uint16,
 	tmpResult[0] = r.data[0]
 	tmpResult[1] = r.data[1]
 
-	data := int16(binary.BigEndian.Uint16(base.swap16BitDataBytes(r.data[0:2], isByteSwap)))
+	data := int16(binary.BigEndian.Uint16(swap16BitDataBytes(r.data[0:2], isByteSwap)))
 	return tmpResult, data, nil
 }
 
@@ -107,7 +105,7 @@ func (c *TcpClient) ReadUint16(memoryArea byte, address uint16, readCount uint16
 	tmpResult[0] = r.data[0]
 	tmpResult[1] = r.data[1]
 
-	data := binary.BigEndian.Uint16(base.swap16BitDataBytes(r.data[0:2], isByteSwap))
+	data := binary.BigEndian.Uint16(swap16BitDataBytes(r.data[0:2], isByteSwap))
 	return tmpResult, data, nil
 
 }
@@ -130,7 +128,7 @@ func (c *TcpClient) ReadInt32(memoryArea byte, address uint16, readCount uint16,
 	tmpResult[2] = r.data[2]
 	tmpResult[3] = r.data[3]
 
-	data := int32(binary.BigEndian.Uint32(base.swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap)))
+	data := int32(binary.BigEndian.Uint32(swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap)))
 	return tmpResult, data, nil
 }
 
@@ -150,7 +148,7 @@ func (c *TcpClient) ReadUint32(memoryArea byte, address uint16, readCount uint16
 	// 	data[i] = binary.BigEndian.Uint32(swap32BitDataBytes(r.data[i*4:i*4+4], isByteSwap, isWordSWap))
 	// }
 
-	data := binary.BigEndian.Uint32(base.swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap))
+	data := binary.BigEndian.Uint32(swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap))
 
 	tmpResult := make([]byte, 4)
 	tmpResult[0] = r.data[0]
@@ -347,7 +345,7 @@ func (c *TcpClient) WriteUint32(memoryArea byte, address uint16, data uint32, is
 	x := int32(data)
 	bytesBuffer := bytes.NewBuffer([]byte{})
 	binary.Write(bytesBuffer, binary.BigEndian, x)
-	bts := base.swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
+	bts := swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
 
 	command := writeCommand(memAddr(memoryArea, address), 2, bts)
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
@@ -360,7 +358,7 @@ func (c *TcpClient) WriteInt32(memoryArea byte, address uint16, data int32, isBy
 
 	bytesBuffer := bytes.NewBuffer([]byte{})
 	binary.Write(bytesBuffer, binary.BigEndian, data)
-	bts := base.swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
+	bts := swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
 
 	command := writeCommand(memAddr(memoryArea, address), 2, bts)
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
@@ -486,13 +484,13 @@ func (c *TcpClient) packTcpWriteCommand(cmd uint32, payload []byte) []byte {
 	buf[3] = 0x53
 
 	//长度
-	base.WriteUint32ToBytes(buf[4:], uint32(length))
+	WriteUint32ToBytes(buf[4:], uint32(length))
 
 	//命令码 读写时为2
-	base.WriteUint32ToBytes(buf[8:], uint32(cmd))
+	WriteUint32ToBytes(buf[8:], uint32(cmd))
 
 	//错误码
-	base.WriteUint32ToBytes(buf[12:], 0)
+	WriteUint32ToBytes(buf[12:], 0)
 
 	//附加数据
 	copy(buf[16:], payload)
@@ -511,13 +509,13 @@ func (c *TcpClient) packTcpReadCommand(cmd uint32, payload []byte) []byte {
 	buf[3] = 0x53
 
 	//长度
-	base.WriteUint32ToBytes(buf[4:], 0x1A)
+	WriteUint32ToBytes(buf[4:], 0x1A)
 
 	//命令码 读写时为2
-	base.WriteUint32ToBytes(buf[8:], uint32(cmd))
+	WriteUint32ToBytes(buf[8:], uint32(cmd))
 
 	//错误码
-	base.WriteUint32ToBytes(buf[12:], 0)
+	WriteUint32ToBytes(buf[12:], 0)
 
 	//附加数据
 	copy(buf[16:], payload)
@@ -574,20 +572,20 @@ func (c *TcpClient) listenLoop() {
 
 		if n > 0 {
 			// 头16字节：FINS + 长度 + 命令 + 错误码
-			status := base.ParseUint32(buf[12:])
+			status := ParseUint32(buf[12:])
 			if status != 0 {
 				log.Printf("TCP状态错误: %v ", status)
 				continue
 			}
 
-			length := base.ParseUint32(buf[4:])
+			length := ParseUint32(buf[4:])
 			// 判断剩余长度
 			if int(length)+8 < n {
 				log.Printf("TCP长度错误: %v ", length)
 				continue
 			}
 
-			command := base.ParseUint32(buf[8:])
+			command := ParseUint32(buf[8:])
 
 			fmt.Println("Receive:", buf[0:length+8])
 

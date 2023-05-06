@@ -1,4 +1,4 @@
-package base
+package fins
 
 //add by zwt 2021-12-17
 func swap16BitDataBytes(dataBytes []byte, isByteSwap bool) []byte {

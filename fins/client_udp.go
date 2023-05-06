@@ -83,7 +83,7 @@ func (c *UdpClient) ReadInt16(memoryArea byte, address uint16, readCount uint16,
 	tmpResult[0] = r.data[0]
 	tmpResult[1] = r.data[1]
 
-	data := int16(binary.BigEndian.Uint16(base.swap16BitDataBytes(r.data[0:2], isByteSwap)))
+	data := int16(binary.BigEndian.Uint16(swap16BitDataBytes(r.data[0:2], isByteSwap)))
 	return tmpResult, data, nil
 }
 
@@ -102,7 +102,7 @@ func (c *UdpClient) ReadUint16(memoryArea byte, address uint16, readCount uint16
 	tmpResult[0] = r.data[0]
 	tmpResult[1] = r.data[1]
 
-	data := binary.BigEndian.Uint16(base.swap16BitDataBytes(r.data[0:2], isByteSwap))
+	data := binary.BigEndian.Uint16(swap16BitDataBytes(r.data[0:2], isByteSwap))
 	return tmpResult, data, nil
 
 }
@@ -125,7 +125,7 @@ func (c *UdpClient) ReadInt32(memoryArea byte, address uint16, readCount uint16,
 	tmpResult[2] = r.data[2]
 	tmpResult[3] = r.data[3]
 
-	data := int32(binary.BigEndian.Uint32(base.swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap)))
+	data := int32(binary.BigEndian.Uint32(swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap)))
 	return tmpResult, data, nil
 }
 
@@ -145,7 +145,7 @@ func (c *UdpClient) ReadUint32(memoryArea byte, address uint16, readCount uint16
 	// 	data[i] = binary.BigEndian.Uint32(swap32BitDataBytes(r.data[i*4:i*4+4], isByteSwap, isWordSWap))
 	// }
 
-	data := binary.BigEndian.Uint32(base.swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap))
+	data := binary.BigEndian.Uint32(swap32BitDataBytes(r.data[0:4], isByteSwap, isWordSWap))
 
 	tmpResult := make([]byte, 4)
 	tmpResult[0] = r.data[0]
@@ -342,7 +342,7 @@ func (c *UdpClient) WriteUint32(memoryArea byte, address uint16, data uint32, is
 	x := int32(data)
 	bytesBuffer := bytes.NewBuffer([]byte{})
 	binary.Write(bytesBuffer, binary.BigEndian, x)
-	bts := base.swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
+	bts := swap32BitDataBytes(bytesBuffer.Bytes(), isByteSwap, isWordSWap)
 
 	command := writeCommand(memAddr(memoryArea, address), 2, bts)
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
