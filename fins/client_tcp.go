@@ -306,7 +306,7 @@ func (c *TcpClient) ReadClock() (*time.Time, error) {
 	return &t, nil
 }
 
-//写入uint16类型
+// 写入uint16类型
 func (c *TcpClient) WriteUint16(memoryArea byte, address uint16, data uint16, isByteSwap bool, isWordSWap bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -322,7 +322,7 @@ func (c *TcpClient) WriteUint16(memoryArea byte, address uint16, data uint16, is
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
 }
 
-//写入int16类型
+// 写入int16类型
 func (c *TcpClient) WriteInt16(memoryArea byte, address uint16, data int16, isByteSwap bool, isWordSWap bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -337,7 +337,7 @@ func (c *TcpClient) WriteInt16(memoryArea byte, address uint16, data int16, isBy
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
 }
 
-//写入uint32
+// 写入uint32
 func (c *TcpClient) WriteUint32(memoryArea byte, address uint16, data uint32, isByteSwap bool, isWordSWap bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -351,7 +351,7 @@ func (c *TcpClient) WriteUint32(memoryArea byte, address uint16, data uint32, is
 	return checkResponse(c.sendCommand(command, COMMAND_TYPE_WRITE))
 }
 
-//写入int32
+// 写入int32
 func (c *TcpClient) WriteInt32(memoryArea byte, address uint16, data int32, isByteSwap bool, isWordSWap bool) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -464,7 +464,7 @@ func (c *TcpClient) incrementSid() byte {
 }
 
 func (c *TcpClient) handShake() error {
-	cmd := []byte{0x46, 0x49, 0x4E, 0x53, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}
+	cmd := []byte{0x46, 0x49, 0x4E, 0x53, 0x00, 0x00, 0x00, 0x0C, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 
 	_, err := (*c.conn).Write(cmd)
 	if err != nil {
@@ -484,7 +484,7 @@ func (c *TcpClient) packTcpWriteCommand(cmd uint32, payload []byte) []byte {
 	buf[3] = 0x53
 
 	//长度
-	WriteUint32ToBytes(buf[4:], uint32(length))
+	WriteUint32ToBytes(buf[4:], uint32(length+8))
 
 	//命令码 读写时为2
 	WriteUint32ToBytes(buf[8:], uint32(cmd))
@@ -509,7 +509,7 @@ func (c *TcpClient) packTcpReadCommand(cmd uint32, payload []byte) []byte {
 	buf[3] = 0x53
 
 	//长度
-	WriteUint32ToBytes(buf[4:], 0x1A)
+	WriteUint32ToBytes(buf[4:], uint32(length+8))
 
 	//命令码 读写时为2
 	WriteUint32ToBytes(buf[8:], uint32(cmd))
@@ -590,9 +590,13 @@ func (c *TcpClient) listenLoop() {
 			fmt.Println("Receive:", buf[0:length+8])
 
 			//判断命令码： 握手命令 or 读写命令
-			if command == 0 { //握手
+			if command == 0 || command == 1 { //握手
 				serverNode := buf[23:]
 				c.dst.node = serverNode[0]
+				serverNode = buf[19:23]
+				c.src.node = serverNode[0]
+				// fmt.Println("c.dst.node:", c.dst.node)
+				// fmt.Println("c.src.node:", c.src.node)
 				//HandShakeChan <- true
 			} else if command == 2 { //读写
 				ans := decodeResponse(buf[16:n])
